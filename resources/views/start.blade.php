@@ -36,8 +36,33 @@
 
             </form>
         </div>
+
+        {{-- showing results --}}
+
+        <div class="container" id="result">
+            <div class="card">
+                <div class="card-body">
+                    <h4>Quiz Results</h4>
+                    <table id="quiz-results-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Total Questions</th>
+                                <th>Right Answers</th>
+                                <th>Wrong Answers</th>
+                                <th>Skip Answers</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
                 
         <script>
+            $('#result').hide();
             $.ajaxSetup({
             headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -85,7 +110,7 @@
             });
             });
 
-            // Handle question submit though ajax
+            // Handle question submit through ajax
             $(document).ready(function() {
             $('#questions-container').on('submit', function(e) {
             e.preventDefault();
@@ -93,8 +118,19 @@
                 type: 'POST',
                 url: $(this).attr('action'),
                 data: $(this).serialize(), 
-                success: function(response) {
-                    console.log(response); 
+                success: function(res) {
+                var resultsTable = $('#result').find('tbody');
+                resultsTable.empty();
+                var newRow = '<tr>' +
+                    '<td>' + res.totalQuestions + '</td>' +
+                    '<td>' + res.rightCount + '</td>' +
+                    '<td>' + res.wrongCount + '</td>' +
+                    '<td>' + res.skipCount + '</td>' +
+                    '<td>' + res.score + ' / ' + res.totalQuestions + '</td>' +
+                    '</tr>';
+                resultsTable.append(newRow);
+                $('#questions-container').hide();
+                $('#result').show();
                 },
                 error: function(xhr, status, error) {
                     console.log(xhr.responseText);

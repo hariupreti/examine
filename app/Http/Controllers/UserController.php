@@ -48,7 +48,6 @@ class UserController extends Controller
     public function submitAnswer(Request $request){
         $selectedAnswers = $request->all();
         $correctAnswers = self::getCorrectAnswers();
-
         $resultsToInsert = [];
         foreach ($selectedAnswers as $questionKey => $answerId) {
             $questionId = intval(str_replace('question_', '', $questionKey));
@@ -67,7 +66,36 @@ class UserController extends Controller
                 ];
             }
         }
-        Result::insert($resultsToInsert);
+        if(Result::insert($resultsToInsert)){
+            $results = self::getUserResults();
+            return response()->json($results,200);
+        }
+    }
+
+    private function getUserResults()
+    {
+        $results = Result::where('user_id', session("id"))->get();
+        $totalQuestions = $results->count();
+        $rightCount = 0;
+        $wrongCount = 0;
+        $skipCount = 0;
+        foreach ($results as $result) {
+            if ($result->user_action === 'right') {
+                $rightCount++;
+            } elseif ($result->user_action === 'wrong') {
+                $wrongCount++;
+            } elseif ($result->user_action === 'skip') {
+                $skipCount++;
+            }
+        }
+        $score = $rightCount;
+        return [
+            'totalQuestions' => $totalQuestions,
+            'rightCount' => $rightCount,
+            'wrongCount' => $wrongCount,
+            'skipCount' => $skipCount,
+            'score' => $score,
+        ];
     }
 
     private function generateUniqueId($limit)
