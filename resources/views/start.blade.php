@@ -2,6 +2,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Examine</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -23,7 +24,6 @@
     <body class="container p-20 mx-auto">
         {{-- user form --}}
         <form style="<?php echo !empty($user_id) ? "display:none;":"display:block;" ?>" id="userSessionForm" class="form-horizontal" action={{ route('username.process') }}>
-            @csrf
             <div class="mb-3">
               <label for="username" class="form-label">Name</label>
               <input type="text" name="username" class="form-control" id="username" aria-describedby="username">
@@ -31,10 +31,19 @@
             <button type="submit" class="btn btn-primary">Start Test</button>
         </form>
 
-        <div id="questions-container" class="container mt-5" >
+        <div class="container mt-5" >
+            <form class="form-horizontal" action={{ route('answer.process') }} id="questions-container">
+
+            </form>
         </div>
                 
         <script>
+            $.ajaxSetup({
+            headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+            });
+
             $(document).ready(function() {
             $('#userSessionForm').on('submit', function(e) {
             e.preventDefault();
@@ -46,7 +55,6 @@
                     if (response.qa.length > 0) {
                     $('#userSessionForm').hide();
                     var html = '';
-                    console.log(response);
                     response.qa.forEach(function(question) {
                         html += '<div class="question">';
                         html += '<h3>' + question.question_text + '</h3>';
@@ -69,6 +77,24 @@
                     } else {
                         $('#questions-container').html('<p>No questions found.</p>');
                     }   
+                },
+                error: function(xhr, status, error) {
+                    console.log(xhr.responseText);
+                }
+            });
+            });
+            });
+
+            // Handle question submit though ajax
+            $(document).ready(function() {
+            $('#questions-container').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: $(this).serialize(), 
+                success: function(response) {
+                    console.log(response); 
                 },
                 error: function(xhr, status, error) {
                     console.log(xhr.responseText);

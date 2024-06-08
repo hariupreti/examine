@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\Question;
+use App\Models\Result;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -26,8 +29,46 @@ class UserController extends Controller
         return response()->json(["qa" => $questionWithAnswers],200);
     }
 
-    public function questionList(){
-        dd(session("id"));
+    public function submitAnswer(Request $request){
+        $questions = Question::with('answers')->get();
+        $questionResults = [];
+
+        foreach ($questions as $question) {
+            $result = [
+                'user_id' => session("id"),
+                'question_id' => $question->id,
+                'answer_id' => null,
+                'user_action' => '',
+                'is_correct' => false
+            ];
+
+            foreach ($question->answers as $answer) {
+                if (isset($selectedAnswers['question_' . $question->id])) {
+                    $selectedAnswerId = $selectedAnswers['question_' . $question->id];
+                    if ($answer->id == $selectedAnswerId) {
+                        $result['answer_id'] = $answer->id;
+                        $result['selected_answer_text'] = $answer->answer_text;
+
+                        if ($answer->is_correct) {
+                            $result['user_action'] = 'right';
+                            $result['is_correct'] = true;
+                        } else {
+                            $result['user_action'] = 'wrong';
+                            $result['is_correct'] = false;
+                        }
+                    }
+                }
+                if ($answer->is_correct) {
+                    $result['answer_id'] = $answer->id;
+                }
+            }
+
+            if (empty($result['selected_answer_id'])) {
+                $result['user_action'] = 'skip';
+            }
+            $questionResults[] = $result;
+            Result::insert($questionResults);
+        }
     }
 
     private function generateUniqueId($limit)

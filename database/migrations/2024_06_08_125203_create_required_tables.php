@@ -29,7 +29,7 @@ return new class extends Migration
 
         Schema::create('results', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->string('user_id');
             $table->unsignedBigInteger('question_id');
             $table->unsignedBigInteger('answer_id');
             $table->boolean('is_correct');
